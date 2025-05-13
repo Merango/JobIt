@@ -1,14 +1,13 @@
 import { validateEmail } from '../lib/validate-email';
 
 describe('Email Validation', () => {
-  // Valid email test cases covering various formats
+  // Valid email test cases
   const validEmails = [
     'user@example.com',
     'firstname.lastname@example.com',
     'email+tag@example.com',
     'user123@example.co.uk',
     'user-name@example.org',
-    'firstname+lastname@example.com',
     'very.common@example.com',
     'disposable.style.email@example.com',
     'other.email-with-hyphen@example.com',
@@ -16,7 +15,7 @@ describe('Email Validation', () => {
     'user.name+tag@subdomain.example.com'
   ];
 
-  // Invalid email test cases covering multiple scenarios
+  // Invalid email test cases
   const invalidEmails = [
     '',
     'invalid-email',
@@ -43,6 +42,7 @@ describe('Email Validation', () => {
     const result = validateEmail(email);
     expect(result.isValid).toBe(true);
     expect(result.errors.length).toBe(0);
+    expect(result.normalizedEmail).toBe(email.trim().toLowerCase());
   });
 
   // Test invalid email scenarios
@@ -57,6 +57,7 @@ describe('Email Validation', () => {
     const email = '  UsEr@ExAmPlE.cOm  ';
     const result = validateEmail(email);
     expect(result.isValid).toBe(true);
+    expect(result.normalizedEmail).toBe('user@example.com');
   });
 
   // Test error messages
@@ -65,5 +66,13 @@ describe('Email Validation', () => {
     const result = validateEmail(invalidEmail);
     expect(result.isValid).toBe(false);
     expect(result.errors).toContain('Invalid email format');
+  });
+
+  // Test edge cases
+  test('handles maximum length constraints', () => {
+    const longEmail = 'a'.repeat(65) + '@example.com';
+    const result = validateEmail(longEmail);
+    expect(result.isValid).toBe(false);
+    expect(result.errors).toContain('Local part of email is too long (max 64 characters)');
   });
 });
