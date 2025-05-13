@@ -1,65 +1,75 @@
 /**
- * Comprehensive email validation following RFC 5322 standards
- * @param email Email address to validate
- * @returns Validation result with detailed information
+ * Comprehensive email validation with detailed results
+ * Follows RFC 5322 standards with additional security checks
  */
 export interface EmailValidationResult {
   isValid: boolean;
   errors: string[];
+  normalizedEmail?: string;
 }
 
 export const validateEmail = (email: string): EmailValidationResult => {
-  const errors: string[] = [];
+  // Initialize validation result
+  const result: EmailValidationResult = {
+    isValid: false,
+    errors: []
+  };
 
-  // Trim and convert to lowercase for consistent validation
-  const trimmedEmail = email.trim().toLowerCase();
+  // Trim and normalize email
+  const normalizedEmail = email.trim().toLowerCase();
+  result.normalizedEmail = normalizedEmail;
 
   // Check for empty email
-  if (!trimmedEmail) {
-    errors.push('Email cannot be empty');
-    return { isValid: false, errors };
+  if (!normalizedEmail) {
+    result.errors.push('Email cannot be empty');
+    return result;
   }
 
-  // RFC 5322 compliant regex with additional checks
-  const emailRegex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+  // Comprehensive RFC 5322 compliant regex with additional checks
+  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
 
   // Validation checks
-  if (!emailRegex.test(trimmedEmail)) {
-    errors.push('Invalid email format');
-    return { isValid: false, errors };
+  if (!emailRegex.test(normalizedEmail)) {
+    result.errors.push('Invalid email format');
+    return result;
   }
 
   // Length checks
-  if (trimmedEmail.length > 254) {
-    errors.push('Email is too long (max 254 characters)');
-    return { isValid: false, errors };
+  if (normalizedEmail.length > 254) {
+    result.errors.push('Email is too long (max 254 characters)');
+    return result;
   }
 
   // Split local and domain parts
-  const [localPart, domainPart] = trimmedEmail.split('@');
+  const [localPart, domainPart] = normalizedEmail.split('@');
   
   // Local part length check (max 64 characters)
   if (localPart.length > 64) {
-    errors.push('Local part of email is too long (max 64 characters)');
-    return { isValid: false, errors };
+    result.errors.push('Local part of email is too long (max 64 characters)');
+    return result;
   }
 
-  // Domain part length and structure check
+  // Domain part length check
   if (domainPart.length > 253) {
-    errors.push('Domain part of email is too long (max 253 characters)');
-    return { isValid: false, errors };
+    result.errors.push('Domain part of email is too long (max 253 characters)');
+    return result;
   }
 
   // Additional domain validation
   const domainParts = domainPart.split('.');
   if (domainParts.some(part => part.length > 63)) {
-    errors.push('Domain segment is too long (max 63 characters)');
-    return { isValid: false, errors };
+    result.errors.push('Domain segment is too long (max 63 characters)');
+    return result;
   }
 
-  // If no errors, return valid result
-  return { 
-    isValid: errors.length === 0, 
-    errors 
-  };
+  // Validate top-level domain
+  const tld = domainParts[domainParts.length - 1];
+  if (tld.length < 2 || tld.length > 63) {
+    result.errors.push('Invalid top-level domain');
+    return result;
+  }
+
+  // If no errors, mark as valid
+  result.isValid = result.errors.length === 0;
+  return result;
 };
