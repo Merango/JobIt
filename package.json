@@ -62,7 +62,10 @@
     "zod": "^3.21.4"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.4.2",
+    "@testing-library/react": "^14.2.1",
     "@types/jest": "^29.5.12",
+    "@types/testing-library__jest-dom": "^6.0.0",
     "@types/uuid": "^9.0.8",
     "@typescript-eslint/eslint-plugin": "^6.12.0",
     "@typescript-eslint/parser": "^6.12.0",
@@ -87,6 +90,9 @@
     "setupFilesAfterEnv": ["<rootDir>/jest.setup.js"],
     "transform": {
       "^.+\\.tsx?$": "ts-jest"
+    },
+    "moduleNameMapper": {
+      "\\.(css|less|sass|scss)$": "identity-obj-proxy"
     }
   }
 }
