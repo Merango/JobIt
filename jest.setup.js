@@ -1,2 +1,3 @@
-// Optional setup for Jest
-// Add any global test configurations or mocks here
+import '@testing-library/jest-dom';
+
+// Additional global setup can be added here if needed
