@@ -1,33 +1,46 @@
 /**
- * Validates email format using a comprehensive regex pattern
+ * Validates email format according to RFC 5322 standard
  * @param email - The email address to validate
- * @returns boolean indicating if the email is valid
+ * @returns Validated and normalized email or null if invalid
  */
-export const isValidEmail = (email: string): boolean => {
-  // Comprehensive email validation regex
-  // Supports most common email formats while preventing obvious invalid patterns
-  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
-  
-  if (!email) return false;
-  
-  // Trim whitespace and validate
-  const trimmedEmail = email.trim();
-  
-  // Basic length check
-  if (trimmedEmail.length < 5 || trimmedEmail.length > 320) return false;
-  
-  // Regex validation
-  const isFormatValid = emailRegex.test(trimmedEmail);
-  
-  // Additional checks
+export const validateEmail = (email: string | null | undefined): string | null => {
+  // Check for null or undefined
+  if (!email) return null;
+
+  // Trim and convert to lowercase for case-insensitive comparison
+  const trimmedEmail = email.trim().toLowerCase();
+
+  // RFC 5322 compliant regex (with some additional constraints)
+  const emailRegex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+
+  // Validate email format
+  if (!emailRegex.test(trimmedEmail)) return null;
+
+  // Additional length checks
+  if (trimmedEmail.length < 5 || trimmedEmail.length > 320) return null;
+
+  // Split email into local part and domain
   const [localPart, domain] = trimmedEmail.split('@');
-  
-  // Ensure local part and domain are not empty
-  if (!localPart || !domain) return false;
-  
-  // Optional: Additional domain validation
+
+  // Additional domain validation
   const domainParts = domain.split('.');
-  if (domainParts.length < 2) return false;
-  
-  return isFormatValid;
+  if (domainParts.length < 2 || domainParts.some(part => part.length === 0)) return null;
+
+  // Return normalized (lowercase) email
+  return trimmedEmail;
+};
+
+/**
+ * Checks if an email is unique (case-insensitive)
+ * @param email - The email to check
+ * @param existingEmails - Array of existing emails
+ * @returns boolean indicating if the email is unique
+ */
+export const isEmailUnique = (email: string, existingEmails: string[]): boolean => {
+  const normalizedEmail = validateEmail(email);
+  if (!normalizedEmail) return false;
+
+  return !existingEmails.some(existingEmail => 
+    validateEmail(existingEmail)?.toLowerCase() === normalizedEmail.toLowerCase()
+  );
 };
