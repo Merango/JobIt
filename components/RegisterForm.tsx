@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { isValidEmail, getEmailValidationError } from '../lib/validation';
+import { isValidEmail, normalizeEmail, getEmailValidationError } from '../lib/validation';
 
 interface RegisterFormData {
   email: string;
@@ -8,15 +8,43 @@ interface RegisterFormData {
 }
 
 const RegisterForm: React.FC = () => {
+  const [emailError, setEmailError] = useState<string | null>(null);
+
   const { 
     register, 
     handleSubmit, 
-    formState: { errors } 
+    formState: { errors },
+    setError,
+    clearErrors
   } = useForm<RegisterFormData>();
 
+  const validateEmail = (email: string): boolean => {
+    const normalizedEmail = normalizeEmail(email);
+    
+    if (!isValidEmail(normalizedEmail)) {
+      setEmailError(getEmailValidationError(email));
+      setError('email', { 
+        type: 'manual', 
+        message: getEmailValidationError(email) 
+      });
+      return false;
+    }
+    
+    // Clear any previous email errors
+    setEmailError(null);
+    clearErrors('email');
+    return true;
+  };
+
   const onSubmit = (data: RegisterFormData) => {
-    // Proceed with registration
-    console.log('Registration data:', data);
+    const isValid = validateEmail(data.email);
+    
+    if (isValid) {
+      // Proceed with registration using normalized email
+      const normalizedEmail = normalizeEmail(data.email);
+      console.log('Registration with normalized email:', normalizedEmail);
+      // Add actual registration logic here
+    }
   };
 
   return (
@@ -28,13 +56,18 @@ const RegisterForm: React.FC = () => {
           type="email"
           {...register('email', {
             required: 'Email is required',
-            validate: (value) => 
-              isValidEmail(value) || getEmailValidationError(value)
+            validate: validateEmail
           })}
+          onChange={(e) => {
+            // Optional: Real-time validation
+            validateEmail(e.target.value);
+          }}
           className={`w-full p-2 border ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
         />
-        {errors.email && (
-          <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+        {(emailError || errors.email) && (
+          <p className="text-red-500 text-sm mt-1">
+            {emailError || errors.email?.message}
+          </p>
         )}
       </div>
       {/* Other form fields would be added here */}
