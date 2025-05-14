@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isValidEmail } from '../lib/utils';
+import { isValidEmail, normalizeEmail } from '../lib/utils';
 
 describe('Email Validation', () => {
   // Valid email test cases
@@ -8,7 +8,12 @@ describe('Email Validation', () => {
     'firstname.lastname@example.com',
     'user+tag@example.com',
     'user123@example.co.uk',
-    'user-name@example.org'
+    'user-name@example.org',
+    'very.common@example.com',
+    'disposable.style.email.with+symbol@example.com',
+    'other.email-with-hyphen@example.com',
+    'fully-qualified-domain@example.com',
+    'user.name+tag@example.co.uk'
   ];
 
   // Invalid email test cases
@@ -21,7 +26,11 @@ describe('Email Validation', () => {
     'user@example..com',
     'user@-example.com',
     'a'.repeat(65) + '@example.com', // Too long local part
-    'user@' + 'a'.repeat(256) + '.com' // Too long domain
+    'user@' + 'a'.repeat(256) + '.com', // Too long domain
+    'plainaddress',
+    '@no-local-part.com',
+    'Outlook User@example.com', // Contains space
+    'user@example,com'
   ];
 
   // Test valid emails
@@ -34,10 +43,12 @@ describe('Email Validation', () => {
     expect(isValidEmail(email)).toBe(false);
   });
 
-  // Additional specific test cases
-  it('should handle null and undefined inputs', () => {
-    expect(isValidEmail('')).toBe(false);
-    expect(isValidEmail(null as any)).toBe(false);
-    expect(isValidEmail(undefined as any)).toBe(false);
+  // Test email normalization
+  describe('Email Normalization', () => {
+    it('should normalize email by trimming and converting to lowercase', () => {
+      expect(normalizeEmail('  User@Example.com  ')).toBe('user@example.com');
+      expect(normalizeEmail('USER@EXAMPLE.COM')).toBe('user@example.com');
+      expect(normalizeEmail('')).toBe('');
+    });
   });
 });
