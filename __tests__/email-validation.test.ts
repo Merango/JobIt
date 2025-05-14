@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { isValidEmail } from '../lib/utils';
 
 describe('Email Validation', () => {
@@ -24,17 +25,17 @@ describe('Email Validation', () => {
   ];
 
   // Test valid emails
-  test.each(validEmails)('should validate valid email: %s', (email) => {
+  it.each(validEmails)('should validate valid email: %s', (email) => {
     expect(isValidEmail(email)).toBe(true);
   });
 
   // Test invalid emails
-  test.each(invalidEmails)('should invalidate invalid email: %s', (email) => {
+  it.each(invalidEmails)('should invalidate invalid email: %s', (email) => {
     expect(isValidEmail(email)).toBe(false);
   });
 
   // Additional specific test cases
-  test('should handle null and undefined inputs', () => {
+  it('should handle null and undefined inputs', () => {
     expect(isValidEmail('')).toBe(false);
     expect(isValidEmail(null as any)).toBe(false);
     expect(isValidEmail(undefined as any)).toBe(false);
