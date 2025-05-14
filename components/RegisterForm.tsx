@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { isValidEmail, normalizeEmail, getEmailValidationError } from '../lib/validation';
+import { validateEmailUniqueness } from '../lib/user-validation';
 
 interface RegisterFormData {
   email: string;
@@ -9,6 +10,7 @@ interface RegisterFormData {
 
 const RegisterForm: React.FC = () => {
   const [emailError, setEmailError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { 
     register, 
@@ -18,32 +20,60 @@ const RegisterForm: React.FC = () => {
     clearErrors
   } = useForm<RegisterFormData>();
 
-  const validateEmail = (email: string): boolean => {
+  const validateEmail = async (email: string): Promise<boolean> => {
     const normalizedEmail = normalizeEmail(email);
     
+    // Clear previous errors
+    setEmailError(null);
+    clearErrors('email');
+
+    // Check email format
     if (!isValidEmail(normalizedEmail)) {
-      setEmailError(getEmailValidationError(email));
+      const errorMessage = getEmailValidationError(email);
+      setEmailError(errorMessage);
       setError('email', { 
         type: 'manual', 
-        message: getEmailValidationError(email) 
+        message: errorMessage 
       });
       return false;
     }
-    
-    // Clear any previous email errors
-    setEmailError(null);
-    clearErrors('email');
+
+    // Check email uniqueness
+    try {
+      const uniquenessResult = await validateEmailUniqueness(normalizedEmail);
+      
+      if (!uniquenessResult.isUnique) {
+        setEmailError(uniquenessResult.message || 'Email is already registered');
+        setError('email', { 
+          type: 'manual', 
+          message: uniquenessResult.message || 'Email is already registered'
+        });
+        return false;
+      }
+    } catch (error) {
+      setEmailError('Error validating email');
+      return false;
+    }
+
     return true;
   };
 
-  const onSubmit = (data: RegisterFormData) => {
-    const isValid = validateEmail(data.email);
+  const onSubmit = async (data: RegisterFormData) => {
+    setIsSubmitting(true);
     
-    if (isValid) {
-      // Proceed with registration using normalized email
-      const normalizedEmail = normalizeEmail(data.email);
-      console.log('Registration with normalized email:', normalizedEmail);
-      // Add actual registration logic here
+    try {
+      const isValid = await validateEmail(data.email);
+      
+      if (isValid) {
+        const normalizedEmail = normalizeEmail(data.email);
+        console.log('Registration with normalized email:', normalizedEmail);
+        // Add actual registration logic here
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      setEmailError('Registration failed');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -58,10 +88,6 @@ const RegisterForm: React.FC = () => {
             required: 'Email is required',
             validate: validateEmail
           })}
-          onChange={(e) => {
-            // Optional: Real-time validation
-            validateEmail(e.target.value);
-          }}
           className={`w-full p-2 border ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
         />
         {(emailError || errors.email) && (
@@ -71,8 +97,12 @@ const RegisterForm: React.FC = () => {
         )}
       </div>
       {/* Other form fields would be added here */}
-      <button type="submit" className="w-full bg-blue-500 text-white p-2">
-        Register
+      <button 
+        type="submit" 
+        disabled={isSubmitting}
+        className="w-full bg-blue-500 text-white p-2 disabled:opacity-50"
+      >
+        {isSubmitting ? 'Registering...' : 'Register'}
       </button>
     </form>
   );
