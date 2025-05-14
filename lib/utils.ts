@@ -8,27 +8,35 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
- * Validate email format using a comprehensive regex pattern
- * Follows RFC 5322 standard with some practical constraints
+ * Validate email format
  * @param email - Email address to validate
  * @returns boolean indicating whether the email is valid
  */
 export function isValidEmail(email: string): boolean {
-  // Regex pattern for email validation
-  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+  // Check if email is empty or not a string
+  if (!email || typeof email !== 'string') return false;
+
+  // Simple but effective email validation regex
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   
-  // Additional checks
-  if (!email) return false;
-  if (email.length > 254) return false; // Max length per RFC 5321
-  
-  // Basic regex match
+  // Additional constraints
+  const MAX_EMAIL_LENGTH = 254;
+  const MAX_LOCAL_PART_LENGTH = 64;
+  const MAX_DOMAIN_LENGTH = 255;
+
+  // Check overall email length
+  if (email.length > MAX_EMAIL_LENGTH) return false;
+
+  // Basic regex validation
   if (!emailRegex.test(email)) return false;
-  
-  // Optional: Additional domain validation
-  const [local, domain] = email.split('@');
-  if (local.length > 64) return false; // Local part max length
-  if (domain.length > 255) return false; // Domain max length
-  
+
+  // Split email into local part and domain
+  const [localPart, domain] = email.split('@');
+
+  // Check lengths of local part and domain
+  if (localPart.length > MAX_LOCAL_PART_LENGTH) return false;
+  if (domain.length > MAX_DOMAIN_LENGTH) return false;
+
   return true;
 }
 
